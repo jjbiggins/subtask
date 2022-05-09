@@ -104,11 +104,7 @@ class Command(object):
 
     @property
     def _pexpect_out(self):
-        if self.subprocess.encoding:
-            result = ""
-        else:
-            result = b""
-
+        result = "" if self.subprocess.encoding else b""
         if self.subprocess.before:
             result += self.subprocess.before
 
@@ -273,11 +269,7 @@ class Command(object):
 
         data = self.out
 
-        if timeout:
-            c = Command(command, timeout)
-        else:
-            c = Command(command)
-
+        c = Command(command, timeout) if timeout else Command(command)
         c.run(block=False, cwd=cwd)
         if data:
             c.send(data)
@@ -290,19 +282,16 @@ def _expand_args(command):
 
     # Prepare arguments.
     if isinstance(command, STR_TYPES):
-        if sys.version_info[0] == 2:
+        if sys.version_info[0] == 2 or sys.version_info[0] != 3:
             splitter = shlex.shlex(command.encode("utf-8"))
-        elif sys.version_info[0] == 3:
-            splitter = shlex.shlex(command)
         else:
-            splitter = shlex.shlex(command.encode("utf-8"))
+            splitter = shlex.shlex(command)
         splitter.whitespace = "|"
         splitter.whitespace_split = True
         command = []
 
         while True:
-            token = splitter.get_token()
-            if token:
+            if token := splitter.get_token():
                 command.append(token)
             else:
                 break
